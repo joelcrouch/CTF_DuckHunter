@@ -35,4 +35,8 @@ public abstract class Duck {
             rc.move(dir);
         }
     }
+
+    public RobotInfo[] senseNearbyEnemies() throws GameActionException {
+        return rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+    }
 }
