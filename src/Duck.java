@@ -51,8 +51,7 @@ public abstract class Duck {
         }
     }
 
-    // Sense nearby enemies
-    protected RobotInfo[] senseEnemies() throws GameActionException {
+    public RobotInfo[] senseNearbyEnemies() throws GameActionException {
         return rc.senseNearbyRobots(-1, rc.getTeam().opponent());
     }
 
