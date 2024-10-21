@@ -1,11 +1,7 @@
+package ducks;
 import battlecode.common.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 
 public abstract class Duck {
@@ -34,9 +30,6 @@ public abstract class Duck {
     // Abstract method that must be implemented by subclasses
     public abstract void run() throws GameActionException;
 
-
-
-    // Common movement behavior
     protected void moveRandomly() throws GameActionException {
         Direction randomDir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(randomDir)) {
@@ -44,7 +37,6 @@ public abstract class Duck {
         }
     }
 
-    // General-purpose movement method
     public void move(Direction dir) throws GameActionException {
         if (rc.canMove(dir)) {
             rc.move(dir);
@@ -55,7 +47,6 @@ public abstract class Duck {
         return rc.senseNearbyRobots(-1, rc.getTeam().opponent());
     }
 
-    // pickup or sensing a flag
     protected void findAndPickupFlag() throws GameActionException {
         if (rc.canPickupFlag(rc.getLocation())) {
             rc.pickupFlag(rc.getLocation());
@@ -63,7 +54,6 @@ public abstract class Duck {
         }
     }
 
-    // General method to find flag and move toward it
     protected void moveToAllySpawnLocation() throws GameActionException {
         if (rc.hasFlag()) {
             MapLocation[] spawnLocs = rc.getAllySpawnLocations();
