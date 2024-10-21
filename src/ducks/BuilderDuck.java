@@ -1,3 +1,5 @@
+package ducks;
+
 import battlecode.common.*;
 
 public class BuilderDuck extends Duck {
