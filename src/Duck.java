@@ -65,7 +65,7 @@ public abstract class Duck {
     }
 
     // General method to find flag and move toward it
-    protected void moveToFlag() throws GameActionException {
+    protected void moveToAllySpawnLocation() throws GameActionException {
         if (rc.hasFlag()) {
             MapLocation[] spawnLocs = rc.getAllySpawnLocations();
             if (spawnLocs.length > 0) {
