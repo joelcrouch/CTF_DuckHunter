@@ -1,4 +1,4 @@
-package examplefuncsplayer;
+package ducks;
 
 import battlecode.common.*;
 
@@ -17,6 +17,7 @@ public strictfp class RobotPlayer {
      * these variables are static, in Battlecode they aren't actually shared between your robots.
      */
     static int turnCount = 0;
+    protected RobotController rc;
 
     /**
      * A random number generator.
@@ -128,6 +129,37 @@ public strictfp class RobotPlayer {
 
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
+
+    public void move(Direction dir) throws GameActionException {
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+        }
+    }
+
+    /**
+     * Attempts to pick up a flag if the robot is on a flag location.
+     */
+    protected void findAndPickupFlag() throws GameActionException {
+        if (rc.canPickupFlag(rc.getLocation())) {
+            rc.pickupFlag(rc.getLocation());
+            rc.setIndicatorString("Picked up a flag!");
+        }
+    }
+
+    // General method to find flag and move toward it
+    protected void moveToAllySpawnLocation() throws GameActionException {
+        if (rc.hasFlag()) {
+            MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+            if (spawnLocs.length > 0) {
+                MapLocation nearestSpawn = spawnLocs[0];  // Choose nearest spawn location
+                Direction toSpawn = rc.getLocation().directionTo(nearestSpawn);
+                move(toSpawn);
+            }
+        }
+
+    }
+
+
     public static void updateEnemyRobots(RobotController rc) throws GameActionException{
         // Sensing methods can be passed in a radius of -1 to automatically
         // use the largest possible value.
