@@ -13,30 +13,33 @@ public strictfp class BuilderDuck extends RobotPlayer {  // Extending RobotPlaye
         this.rc = rc;
     }
 
+    @Override
     public void run() throws GameActionException {
         while (true) {
+            turnCount +=1;
             try {
                 // Use the methods from RobotPlayer
-
-                // Attempt to pick up a flag if there's one available
-                findAndPickupFlag();
-
-                // If carrying a flag, move toward the nearest ally spawn location
-                if (rc.hasFlag()) {
-                    moveToAllySpawnLocation();
+                if (!rc.isSpawned()){
+                    attemptToSpawn();
                 } else {
-                    // Continue with the builder duck's usual behavior if not carrying a flag
-                    buildRandomTrap();
-                    //repairAlly();
-                    randomMovement();
+                    // Attempt to pick up a flag if there's one available
+                    findAndPickupFlag();
+                    // If carrying a flag, move toward the nearest ally spawn location
+                    if (rc.hasFlag()) {
+                        moveToAllySpawnLocation();
+                    } else {
+                        // Continue with the builder duck's usual behavior if not carrying a flag
+                        buildRandomTrap();
+                        //repairAlly();
+                        randomMovement();
+                    }
                 }
-
-                // End the turn
-                Clock.yield();
-
             } catch (GameActionException e) {
                 System.out.println("Exception caught in BuilderDuck run method.");
                 e.printStackTrace();
+            } finally {
+                // End the turn
+                Clock.yield();
             }
         }
     }
