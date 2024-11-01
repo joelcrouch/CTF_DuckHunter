@@ -47,7 +47,7 @@ public strictfp class HealerDuck extends RobotPlayer{
                                 }
                             }
                         }
-                            // If no allies to heal, move randomly
+                        // If no allies to heal, move randomly
                         Direction dir = directions[rng.nextInt(directions.length)];
                         MapLocation nextLoc = rc.getLocation().add(dir);
                         if (rc.canMove(dir)) {
@@ -65,7 +65,6 @@ public strictfp class HealerDuck extends RobotPlayer{
         }
     }
 }
-
 
 
 
