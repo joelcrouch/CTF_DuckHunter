@@ -16,21 +16,23 @@ public strictfp class BuilderDuck extends RobotPlayer {  // Extending RobotPlaye
     @Override
     public void run() throws GameActionException {
         while (true) {
-            turnCount +=1;
+            turnCount += 1;
             try {
                 // Use the methods from RobotPlayer
-                if (!rc.isSpawned()){
+                if (!rc.isSpawned()) {
                     attemptToSpawn();
                 } else {
                     // Attempt to pick up a flag if there's one available
                     findAndPickupFlag();
+
                     // If carrying a flag, move toward the nearest ally spawn location
                     if (rc.hasFlag()) {
                         moveToAllySpawnLocation();
                     } else {
+                        // Update its position in shared array for AttackDuck
+                        updateLocationInSharedArray();
                         // Continue with the builder duck's usual behavior if not carrying a flag
                         buildRandomTrap();
-                        //repairAlly();
                         randomMovement();
                     }
                 }
@@ -41,6 +43,16 @@ public strictfp class BuilderDuck extends RobotPlayer {  // Extending RobotPlaye
                 // End the turn
                 Clock.yield();
             }
+        }
+    }
+
+    // Method to update its location in a shared array
+    private void updateLocationInSharedArray() throws GameActionException {
+        MapLocation currentLoc = rc.getLocation();
+        // Write the BuilderDuck's location in shared array (assuming index 1)
+        if (rc.canWriteSharedArray(1, currentLoc.x)) {
+            rc.writeSharedArray(1, currentLoc.x);
+            rc.writeSharedArray(2, currentLoc.y);
         }
     }
 
