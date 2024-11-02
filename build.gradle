@@ -177,6 +177,9 @@ def clientType = project.findProperty("compatibilityClient").toBoolean()
 dependencies {
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
+  // Add Mockito for JUnit 4
+  testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.6.0'
+
   // The Battlecode engine.
   implementation group: 'org.battlecode', name: 'battlecode24', version: versions.battlecode
 
