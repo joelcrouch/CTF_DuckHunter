@@ -98,7 +98,7 @@ public class RobotPlayerTest {
         MapLocation spawnLocation = new MapLocation(1, 0); // Example spawn location
         MapLocation[] spawnLocs = { spawnLocation }; // Non-empty spawn array
 
-        // Set up micito behavior
+        // Set up micito  behavior
         when(mockRc.getAllySpawnLocations()).thenReturn(spawnLocs); // Provide spawn locations
         when(mockRc.getLocation()).thenReturn(mockLocation); // Set robot's current location
 
