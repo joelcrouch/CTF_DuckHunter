@@ -45,7 +45,7 @@ public strictfp class BuilderDuck extends RobotPlayer {  // Extending RobotPlaye
     }
 
     // Method to randomly move the builder duck
-    void randomMovement() throws GameActionException {
+    protected void randomMovement() throws GameActionException {
         Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(dir)) {
             rc.move(dir);
@@ -53,7 +53,7 @@ public strictfp class BuilderDuck extends RobotPlayer {  // Extending RobotPlaye
     }
 
     // Method to build a random trap
-    void buildRandomTrap() throws GameActionException {
+    protected void buildRandomTrap() throws GameActionException {
         Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canBuild(TrapType.EXPLOSIVE, rc.adjacentLocation(dir))) {
             rc.build(TrapType.EXPLOSIVE, rc.adjacentLocation(dir));
