@@ -153,7 +153,13 @@ public strictfp class AttackDuck extends RobotPlayer { // Extending RobotPlayer
     public void moveToFlagsLocation(FlagInfo[] flags) throws GameActionException {
         MapLocation flagLocation = flags[0].getLocation();
         Direction toFlag = rc.getLocation().directionTo(flagLocation);
-        move(toFlag);
+        // move(toFlag);
+        if (rc.canMove(toFlag)) {
+            rc.move(toFlag);
+        } else {
+            // If the direct path is blocked, try to move in a random direction
+            moveRandomly();
+        }
     }
 
     // function to return if the robot id divisible by 7
