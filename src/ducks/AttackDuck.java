@@ -84,42 +84,6 @@ public strictfp class AttackDuck extends RobotPlayer { // Extending RobotPlayer
         }
     }
 
-    private void avoidBuilderDuck() throws GameActionException {
-        // Sense nearby robots
-        RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
-        boolean hasBuilderDuck = false;
-        int attackDuckCount = 0;
-
-        // Check for BuilderDucks and count nearby AttackDucks
-        for (RobotInfo robot : nearbyRobots) {
-            // Example condition for BuilderDuck (customize this logic)
-            if (robot.getTeam() == rc.getTeam() && robot.getID() % 2 == 0) { // Placeholder condition for BuilderDuck
-                hasBuilderDuck = true;
-            } else if (robot.getTeam() == rc.getTeam() && robot.getID() % 2 != 0) { // Placeholder condition for
-                                                                                    // AttackDuck
-                attackDuckCount++;
-            }
-        }
-
-        // If there's a BuilderDuck and at least one nearby AttackDuck, move away from
-        // the BuilderDuck
-        if (hasBuilderDuck && attackDuckCount > 0) {
-            // Move away from the BuilderDuck
-            for (RobotInfo robot : nearbyRobots) {
-                // Same condition used here to identify the BuilderDuck
-                if (robot.getTeam() == rc.getTeam() && robot.getID() % 2 == 0) { // Example condition for BuilderDuck
-                    // Calculate the direction to move away from the BuilderDuck
-                    Direction awayFromBuilder = rc.getLocation().directionTo(robot.getLocation()).opposite();
-                    if (rc.canMove(awayFromBuilder)) {
-                        rc.move(awayFromBuilder);
-                        System.out.println("Moving away from BuilderDuck!");
-                    }
-                    break; // Exit after moving away from the first found BuilderDuck
-                }
-            }
-        }
-    }
-
     public void attackLowestHealthRobot(RobotInfo[] enemyRobots) throws GameActionException {
         // RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         RobotInfo lowestHealthRobot = enemyRobots[0];
@@ -153,7 +117,13 @@ public strictfp class AttackDuck extends RobotPlayer { // Extending RobotPlayer
     public void moveToFlagsLocation(FlagInfo[] flags) throws GameActionException {
         MapLocation flagLocation = flags[0].getLocation();
         Direction toFlag = rc.getLocation().directionTo(flagLocation);
-        move(toFlag);
+        // move(toFlag);
+        if (rc.canMove(toFlag)) {
+            rc.move(toFlag);
+        } else {
+            // If the direct path is blocked, try to move in a random direction
+            moveRandomly();
+        }
     }
 
     // function to return if the robot id divisible by 7
