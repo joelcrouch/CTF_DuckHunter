@@ -4,7 +4,7 @@ import battlecode.common.*;
 
 import java.util.Random;
 
-public strictfp class AttackDuck extends RobotPlayer { // Extending RobotPlayer
+public class AttackDuck {
     RobotController rc;
     static final Direction[] directions = Direction.allDirections();
     Random rng = new Random();
@@ -16,73 +16,73 @@ public strictfp class AttackDuck extends RobotPlayer { // Extending RobotPlayer
         this.rc = rc;
     }
 
-    @Override
-    public void run() throws GameActionException {
-        while (true) {
-            turnCount += 1;
-            try {
-                // Use the methods from RobotPlayer
-                if (!rc.isSpawned()) {
-                    attemptToSpawn();
-                } else {
-
-                    FlagInfo[] flags = rc.senseNearbyFlags(-1, rc.getTeam());
-
-                    // if there are flags nearby, pickup the flag
-                    for (FlagInfo flag : flags) {
-                        // findAndPickupFlag();
-                        if (rc.canPickupFlag(flag.getLocation())) {
-                            rc.pickupFlag(flag.getLocation());
-                            break;
-                        }
-                    }
-                    if (rc.hasFlag()) {
-                        // If the robot has a flag, move towards the ally spawn location
-                        moveToAllySpawnLocation();
-                    }
-                    // if robot has no flag, check if there are enemy robots nearby
-                    else {
-                        updateEnemyRobots(rc);
-                        RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-                        // if there are enemy robots nearby, attack the lowest health robot
-                        if (enemyRobots.length > 0) {
-                            attackLowestHealthRobot(enemyRobots);
-                        } else {
-                            movingDecision();
-                        }
-
-                    }
-                    // if robot has no flag, check if there are enemy robots nearby
-                    // findAndPickupFlag();
-                    // // If carrying a flag, move toward the nearest ally spawn location
-                    // if (rc.hasFlag()) {
-                    // moveToAllySpawnLocation();
-                    // } else {
-                    // // Implement the avoidBuilderDuck logic
-                    // avoidBuilderDuck();
-
-                    // // Do some attacking and move about
-                    // // Move and attack randomly if no objective.
-                    // Direction dir = directions[rng.nextInt(directions.length)];
-                    // MapLocation nextLoc = rc.getLocation().add(dir);
-                    // if (rc.canMove(dir)) {
-                    // rc.move(dir);
-                    // } else if (rc.canAttack(nextLoc)) {
-                    // rc.attack(nextLoc);
-                    // System.out.println("Take that! Attack duck hit an enemy that was in our
-                    // way!");
-                    // }
-                    // }
-                }
-            } catch (GameActionException e) {
-                System.out.println("Exception caught in AttackDuck run method.");
-                e.printStackTrace();
-            } finally {
-                // End the turn
-                Clock.yield();
-            }
-        }
-    }
+//    //@Override
+//    public static void run(RobotController rc) throws GameActionException {
+//        while (true) {
+//            turnCount += 1;
+//            try {
+//                // Use the methods from RobotPlayer
+//                if (!rc.isSpawned()) {
+//                    attemptToSpawn();
+//                } else {
+//
+//                    FlagInfo[] flags = rc.senseNearbyFlags(-1, rc.getTeam());
+//
+//                    // if there are flags nearby, pickup the flag
+//                    for (FlagInfo flag : flags) {
+//                        // findAndPickupFlag();
+//                        if (rc.canPickupFlag(flag.getLocation())) {
+//                            rc.pickupFlag(flag.getLocation());
+//                            break;
+//                        }
+//                    }
+//                    if (rc.hasFlag()) {
+//                        // If the robot has a flag, move towards the ally spawn location
+//                        moveToAllySpawnLocation();
+//                    }
+//                    // if robot has no flag, check if there are enemy robots nearby
+//                    else {
+//                        updateEnemyRobots(rc);
+//                        RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+//                        // if there are enemy robots nearby, attack the lowest health robot
+//                        if (enemyRobots.length > 0) {
+//                            attackLowestHealthRobot(enemyRobots);
+//                        } else {
+//                            movingDecision();
+//                        }
+//
+//                    }
+//                    // if robot has no flag, check if there are enemy robots nearby
+//                    // findAndPickupFlag();
+//                    // // If carrying a flag, move toward the nearest ally spawn location
+//                    // if (rc.hasFlag()) {
+//                    // moveToAllySpawnLocation();
+//                    // } else {
+//                    // // Implement the avoidBuilderDuck logic
+//                    // avoidBuilderDuck();
+//
+//                    // // Do some attacking and move about
+//                    // // Move and attack randomly if no objective.
+//                    // Direction dir = directions[rng.nextInt(directions.length)];
+//                    // MapLocation nextLoc = rc.getLocation().add(dir);
+//                    // if (rc.canMove(dir)) {
+//                    // rc.move(dir);
+//                    // } else if (rc.canAttack(nextLoc)) {
+//                    // rc.attack(nextLoc);
+//                    // System.out.println("Take that! Attack duck hit an enemy that was in our
+//                    // way!");
+//                    // }
+//                    // }
+//                }
+//            } catch (GameActionException e) {
+//                System.out.println("Exception caught in AttackDuck run method.");
+//                e.printStackTrace();
+//            } finally {
+//                // End the turn
+//                Clock.yield();
+//            }
+//        }
+//    }
 
     public void attackLowestHealthRobot(RobotInfo[] enemyRobots) throws GameActionException {
         // RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
