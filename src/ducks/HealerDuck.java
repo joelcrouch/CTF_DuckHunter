@@ -14,6 +14,7 @@ public  class HealerDuck {
     }
 
     public void healNearbyAlliesOrMove() throws GameActionException {
+        System.out.println("Healing NearbyAlliesOrMove");
         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
 
         for (RobotInfo ally : allies) {

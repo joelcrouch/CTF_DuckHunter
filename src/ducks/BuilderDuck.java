@@ -34,6 +34,7 @@ public class BuilderDuck {  // Extending RobotPlayer if necessary
     }
 
     public void doBuilderDuckActions() throws GameActionException {
+        System.out.println("Doing a builder duck actions");
         randomMovement();
         buildRandomTrap();
     }

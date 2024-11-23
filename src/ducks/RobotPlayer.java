@@ -72,49 +72,52 @@ public abstract class RobotPlayer {
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
             try {
                 // Make sure you spawn your robot in before you attempt to take any actions!
-                int rn = rc.getRoundNum();
-                if (rn < 15) {
-                    InheritedRobotPlayer player = new InheritedRobotPlayer(rc); // Example subclass
-                    System.out.println(rn);
+
                     //run(rc);
-                } else if (!rc.isSpawned()) { // Fixing misplaced brackets
+                if (!rc.isSpawned()) { // Fixing misplaced brackets
                     MapLocation[] spawnLocs = rc.getAllySpawnLocations();
                     // Pick a random spawn location to attempt spawning in.
                     MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
                     if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
                 } else {
+
+                    HealerDuck healerDuck = new HealerDuck(rc);
+                    BuilderDuck builderDuck = new BuilderDuck(rc);
+
+                    healerDuck.healNearbyAlliesOrMove();
+                    builderDuck.doBuilderDuckActions();
                     // Default behavior from base class
                     //System.out.println("Running base RobotPlayer behavior!");
 
-                    if (rc.canPickupFlag(rc.getLocation())) {
-                        rc.pickupFlag(rc.getLocation());
-                        rc.setIndicatorString("Holding a flag!");
-                    }
-                    // If we are holding an enemy flag, singularly focus on moving towards
-                    // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
-                    // to make sure setup phase has ended.
-                    if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS) {
-                        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-                        MapLocation firstLoc = spawnLocs[0];
-                        Direction dir = rc.getLocation().directionTo(firstLoc);
-                        if (rc.canMove(dir)) rc.move(dir);
-                    }
-                    // Move and attack randomly if no objective.
-                    Direction dir = directions[rng.nextInt(directions.length)];
-                    MapLocation nextLoc = rc.getLocation().add(dir);
-                    if (rc.canMove(dir)) {
-                        rc.move(dir);
-                    } else if (rc.canAttack(nextLoc)) {
-                        rc.attack(nextLoc);
-                        System.out.println("Take that!  Base class Damaged an enemy that was in our way!");
-                    }
-
-                    // Rarely attempt placing traps behind the robot.
-                    MapLocation prevLoc = rc.getLocation().subtract(dir);
-                    if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && rng.nextInt() % 37 == 1)
-                        rc.build(TrapType.EXPLOSIVE, prevLoc);
-                    // We can also move our code into different methods or classes to better organize it!
-                    updateEnemyRobots(rc);
+//                    if (rc.canPickupFlag(rc.getLocation())) {
+//                        rc.pickupFlag(rc.getLocation());
+//                        rc.setIndicatorString("Holding a flag!");
+//                    }
+//                    // If we are holding an enemy flag, singularly focus on moving towards
+//                    // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
+//                    // to make sure setup phase has ended.
+//                    if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS) {
+//                        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+//                        MapLocation firstLoc = spawnLocs[0];
+//                        Direction dir = rc.getLocation().directionTo(firstLoc);
+//                        if (rc.canMove(dir)) rc.move(dir);
+//                    }
+//                    // Move and attack randomly if no objective.
+//                    Direction dir = directions[rng.nextInt(directions.length)];
+//                    MapLocation nextLoc = rc.getLocation().add(dir);
+//                    if (rc.canMove(dir)) {
+//                        rc.move(dir);
+//                    } else if (rc.canAttack(nextLoc)) {
+//                        rc.attack(nextLoc);
+//                        System.out.println("Take that!  Base class Damaged an enemy that was in our way!");
+//                    }
+//
+//                    // Rarely attempt placing traps behind the robot.
+//                    MapLocation prevLoc = rc.getLocation().subtract(dir);
+//                    if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && rng.nextInt() % 37 == 1)
+//                        rc.build(TrapType.EXPLOSIVE, prevLoc);
+//                    // We can also move our code into different methods or classes to better organize it!
+//                    updateEnemyRobots(rc);
                 }
 
             } catch (GameActionException e) {
