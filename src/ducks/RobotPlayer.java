@@ -5,6 +5,7 @@ import ducks.AttackDuck;
 import ducks.HealerDuck;
 import ducks.BuilderDuck;
 
+import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.Random;
 
 /**
@@ -52,96 +53,71 @@ public abstract class RobotPlayer {
      *           information on its current status. Essentially your portal to interacting with the world.
      **/
 
-    @SuppressWarnings("unused")
-    public  static  void run(RobotController rc) throws GameActionException {
-
-        // Hello world! Standard output is very useful for debugging.
-        // Everything you say here will be directly viewable in your terminal when you run a match!
-        System.out.println("I'm  the base class and im alive");
-
-        // You can also use indicators to save debug notes in replays.
+    //SuppressWarnings("unused")
+    public static void run(RobotController rc) throws GameActionException {
+        System.out.println("I'm the base class and I'm alive");
         rc.setIndicatorString("Hello world!");
 
+        Random rng = new Random();
+        int turnCount = 0;
+        BuilderDuck builderDuck = new BuilderDuck(rc);
+        HealerDuck healerDuck = new HealerDuck(rc);
+        AttackDuck attackDuck = new AttackDuck(rc);
+
         while (true) {
-            // This code runs during the entire lifespan of the robot, which is why it is in an infinite
-            // loop. If we ever leave this loop and return from run(), the robot dies! At the end of the
-            // loop, we call Clock.yield(), signifying that we've done everything we want to do.
-
-            turnCount += 1;  // We have now been alive for one more turn!
-
-            // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
+            turnCount++;
             try {
-                // Make sure you spawn your robot in before you attempt to take any actions!
-
-                    //run(rc);
-                if (!rc.isSpawned()) { // Fixing misplaced brackets
+                if (!rc.isSpawned()) {
+                    // Try to spawn if not spawned
                     MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-                    // Pick a random spawn location to attempt spawning in.
-                    MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
-                    if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
+                    if (spawnLocs.length > 0) {
+                        MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
+                        if (rc.canSpawn(randomLoc)) {
+                            rc.spawn(randomLoc);
+                        } else {
+                            System.out.println("Cannot spawn at: " + randomLoc);
+                        }
+                    }
                 } else {
-
-                    HealerDuck healerDuck = new HealerDuck(rc);
-                    BuilderDuck builderDuck = new BuilderDuck(rc);
-
-                    healerDuck.healNearbyAlliesOrMove();
-                    builderDuck.doBuilderDuckActions();
-                    // Default behavior from base class
-                    //System.out.println("Running base RobotPlayer behavior!");
-
-//                    if (rc.canPickupFlag(rc.getLocation())) {
-//                        rc.pickupFlag(rc.getLocation());
-//                        rc.setIndicatorString("Holding a flag!");
-//                    }
-//                    // If we are holding an enemy flag, singularly focus on moving towards
-//                    // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
-//                    // to make sure setup phase has ended.
-//                    if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS) {
-//                        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-//                        MapLocation firstLoc = spawnLocs[0];
-//                        Direction dir = rc.getLocation().directionTo(firstLoc);
-//                        if (rc.canMove(dir)) rc.move(dir);
-//                    }
-//                    // Move and attack randomly if no objective.
-//                    Direction dir = directions[rng.nextInt(directions.length)];
-//                    MapLocation nextLoc = rc.getLocation().add(dir);
-//                    if (rc.canMove(dir)) {
-//                        rc.move(dir);
-//                    } else if (rc.canAttack(nextLoc)) {
-//                        rc.attack(nextLoc);
-//                        System.out.println("Take that!  Base class Damaged an enemy that was in our way!");
-//                    }
-//
-//                    // Rarely attempt placing traps behind the robot.
-//                    MapLocation prevLoc = rc.getLocation().subtract(dir);
-//                    if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && rng.nextInt() % 37 == 1)
-//                        rc.build(TrapType.EXPLOSIVE, prevLoc);
-//                    // We can also move our code into different methods or classes to better organize it!
-//                    updateEnemyRobots(rc);
+                    // we watn to determine our spawn points, write into shared array, [1,2,3]
+                    //the first 1
+                    MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+                    for (int i = 0; i<3; i++){
+                        int x= spawnLocs[i].x;
+                        int y =spawnLocs[i].y;
+                        rc.writeSharedArray(2 *i, x);
+                        rc.writeSharedArray(2 *i +1,y);
+                    }  //the first 6 slots in the array are reserved for spawn locations
+                    //on first round
+                    // size of the map and write similarily int sa[6] and sa[7] wher 6=x and  7 =y
+                    // assuming opponents spawn points are in similar locations, then use sa 0-5 to determine maplocationattack
+                    //maplocationattack in sa8
+                    // determine opposing euqivalent spawn (shoudld be near flags) [sa 567}
+                    //determine the size[sa4] , at round 201 use attackduck gotompalocation to send all the ducks
+                    // to those three locations
+                    // Alternate between builder and healer behavior
+                    //if depending upon results of sensenearbyMaplocation determine behavior: if there watersf fill, if
+                    //traps of oppposite fill
+                    // sensenearbyrobots if the enemey is near attack themm
+                    // sensenearbrobots so if they are friendly and no robots, find out who has lowest health, heal them
+                    if (turnCount % 2 == 0) {  //setup phase 200 rounds. explore and build then
+                        //at rnd 201 most ducks behave like attakc ducks 2/3 rounds, healer duck1/3
+                        //if there are water feature fill with buiilder   fucntion sensenearbyMaplocation
+                        builderDuck.doBuilderDuckActions();
+                    } else {
+                        healerDuck.healNearbyAlliesOrMove();
+                    }
                 }
-
             } catch (GameActionException e) {
-                // Oh no! It looks like we did something illegal in the Battlecode world. You should
-                // handle GameActionExceptions judiciously, in case unexpected events occur in the game
-                // world. Remember, uncaught exceptions cause your robot to explode!
-                System.out.println("GameActionException");
+                System.out.println("GameActionException occurred!");
                 e.printStackTrace();
-
             } catch (Exception e) {
-                // Oh no! It looks like our code tried to do something bad. This isn't a
-                // GameActionException, so it's more likely to be a bug in our code.
-                System.out.println("Exception");
+                System.out.println("Exception occurred!");
                 e.printStackTrace();
-
             } finally {
-                // Signify we've done everything we want to do, thereby ending our turn.
-                // This will make our code wait until the next turn, and then perform this loop again.
-                Clock.yield();
+                Clock.yield(); // End the turn
             }
-            // End of loop: go back to the top. Clock.yield() has ended, so it's time for another turn!
         }
-
-        // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
     public static void updateEnemyRobots(RobotController rc) throws GameActionException {
