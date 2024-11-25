@@ -81,18 +81,33 @@ public abstract class RobotPlayer {
                 } else {
                     // we watn to determine our spawn points, write into shared array, [1,2,3]
                     //the first 1
-                    MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-                    for (int i = 0; i<3; i++){
-                        int x= spawnLocs[i].x;
-                        int y =spawnLocs[i].y;
-                        rc.writeSharedArray(2 *i, x);
-                        rc.writeSharedArray(2 *i +1,y);
-                    }  //the first 6 slots in the array are reserved for spawn locations
+                    int roundNumber = rc.getRoundNum();
+                    if(roundNumber == 1) {
+                        storeAllySpawns(rc);
+                        storeMapDimensions(rc);
+                        storeEnemySpawns(rc);
+                    }
+
+ //the first 6 slots in the array are reserved for spawn locations
                     //on first round
                     // size of the map and write similarily int sa[6] and sa[7] wher 6=x and  7 =y
+
+
+// determine opposing euqivalent spawn (shoudld be near flags)
+
+
+//sa 8 and 9 give us a maplocation to got to and start hunting for flags sa 8 and 9 (xandy respectiveley)
+
                     // assuming opponents spawn points are in similar locations, then use sa 0-5 to determine maplocationattack
                     //maplocationattack in sa8
-                    // determine opposing euqivalent spawn (shoudld be near flags) [sa 567}
+
+                    //divide into teams: on spawn, read sa[10], then based upon that nubmer (divide it by 5)
+                    //assign itself a team number (there will be 10 teams 0-4 on team 0, 5-9 team 1, 10-14team 2 etc
+                    //then we assign one as the team leader and generlly that one makes the decisions (if that one in in jail
+                    // we suss that out.     
+
+
+
                     //determine the size[sa4] , at round 201 use attackduck gotompalocation to send all the ducks
                     // to those three locations
                     // Alternate between builder and healer behavior
@@ -139,8 +154,42 @@ public abstract class RobotPlayer {
         }
     }
 
-    public abstract void run() throws GameActionException;
+    public static void storeAllySpawns(RobotController rc) throws GameActionException {
+        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+
+        for (int i = 0; i < 3; i++) {
+            int x = spawnLocs[i].x;
+            int y = spawnLocs[i].y;
+            rc.writeSharedArray(2 * i, x);       // Write x-coordinate
+            rc.writeSharedArray(2 * i + 1, y);  // Write y-coordinate
+        }
+
+        System.out.println("Ally spawn locations stored in sharedArray.");
+    }
+
+    public static void storeMapDimensions(RobotController rc) throws GameActionException {
+        int width = rc.getMapWidth();
+        int height = rc.getMapHeight();
+        rc.writeSharedArray(6, width);  // Write map width
+        rc.writeSharedArray(7, height); // Write map height
+
+        System.out.println("Map dimensions (" + width + "x" + height + ") stored in sharedArray.");
+    }
+
+    public static void storeEnemySpawns(RobotController rc) throws GameActionException {
+        int width = rc.readSharedArray(6);   // Read map width
+        int height = rc.readSharedArray(7); // Read map height
+
+        int enemySpawnSitex = width - rc.readSharedArray(0);  // Symmetric x-coordinate
+        int enemySpawnSitey = height - rc.readSharedArray(1); // Symmetric y-coordinate
+        rc.writeSharedArray(8, enemySpawnSitex);  // Write enemy x-coordinate
+        rc.writeSharedArray(9, enemySpawnSitey);  // Write enemy y-coordinate
+
+        System.out.println("Enemy spawn location (" + enemySpawnSitex + ", " + enemySpawnSitey + ") stored in sharedArray.");
+    }
 }
+
+
     //@SuppressWarnings("unused")
     // Abstract run method that subclasses must implement
     //public abstract void run() throws GameActionException;
