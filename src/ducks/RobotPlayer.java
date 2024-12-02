@@ -4,6 +4,7 @@ import battlecode.common.*;
 import ducks.AttackDuck;
 import ducks.HealerDuck;
 import ducks.BuilderDuck;
+import ducks.RobotNavigator;
 
 import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.Random;
@@ -22,7 +23,8 @@ public abstract class RobotPlayer {
      */
     static int turnCount = 0;
     protected RobotController rc;
-
+    int teamNumber = 0;
+    private static RobotState robotState;
     /**
      * A random number generator.
      * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
@@ -55,73 +57,111 @@ public abstract class RobotPlayer {
 
     //SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
-        System.out.println("I'm the base class and I'm alive");
-        rc.setIndicatorString("Hello world!");
 
         Random rng = new Random();
         int turnCount = 0;
+        if (robotState == null) {
+            robotState = new RobotState();  // Initialize it once on the first turn
+        }
+
         BuilderDuck builderDuck = new BuilderDuck(rc);
         HealerDuck healerDuck = new HealerDuck(rc);
         AttackDuck attackDuck = new AttackDuck(rc);
+        RobotNavigator navigator = new RobotNavigator(rc);
 
         while (true) {
             turnCount++;
             try {
+//                if (rc.getRoundNum() < 201 && rc.getRoundNum() >189){
+//                System.out.println("Current Round: " + rc.getRoundNum());}
+                // 1. Spawn if necessary
                 if (!rc.isSpawned()) {
-                    // Try to spawn if not spawned
                     MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-                    if (spawnLocs.length > 0) {
-                        MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
-                        if (rc.canSpawn(randomLoc)) {
-                            rc.spawn(randomLoc);
-                        } else {
-                            System.out.println("Cannot spawn at: " + randomLoc);
-                        }
+                    MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
+                    if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
+                }
+                // 2. Get spawns/map dimensions enemy spawns
+                else if (rc.getRoundNum() == 30) {
+                    storeAllySpawns(rc);
+                    storeMapDimensions(rc);
+                    storeEnemySpawns(rc);
+                }
+                // 3. Assign robot to team
+                else if (rc.getRoundNum() == 50) {
+                    assignTeam(rc, robotState);
+                }else if (findAndPickupFlag(rc)) {
+                    navigator.returnToBase(rc);
+                }
+                else if(rc.hasFlag()) {
+                    navigator.returnToBase(rc);
+                }
+                else if (rc.getRoundNum() == 100) {
+                    // Assign a random destination if not already set
+                    if (robotState.getTargetLocation() == null) {
+                        MapLocation randomDestination = navigator.generateRandomLocation(rc);
+                        robotState.setTargetLocation(randomDestination);
+                        System.out.println("Assigned random destination: " + randomDestination);
                     }
-                } else {
-                    // we watn to determine our spawn points, write into shared array, [1,2,3]
-                    //the first 1
-                    int roundNumber = rc.getRoundNum();
-                    if(roundNumber == 1) {
-                        storeAllySpawns(rc);
-                        storeMapDimensions(rc);
-                        storeEnemySpawns(rc);
-                    }
-
- //the first 6 slots in the array are reserved for spawn locations
-                    //on first round
-                    // size of the map and write similarily int sa[6] and sa[7] wher 6=x and  7 =y
+                }
 
 
-// determine opposing euqivalent spawn (shoudld be near flags)
+                // 4. Build stuff up to 200
+                else if (rc.getRoundNum() < 190) {
+                    builderDuck.doBuilderDuckActions();
+                }
+//                if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS){
+//                    MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+//                    MapLocation firstLoc = spawnLocs[0];
+//                    Direction dir = rc.getLocation().directionTo(firstLoc);
+//                    if (rc.canMove(dir)) rc.move(dir);
+//
+//                } // 5. Check and buy upgrades
+                else if (rc.getRoundNum() == 601 || rc.getRoundNum() == 1201 || rc.getRoundNum() == 1801) {
+                    robotState.checkAndBuyUpgrades(rc.getRoundNum(), rc);
+                } else if (rc.getRoundNum() % 100 == 0){
+                    MapLocation test = robotState.getTargetLocation();
+                    System.out.println("Target Dest =: " + test.x +"," + test.y);
 
+                }
 
-//sa 8 and 9 give us a maplocation to got to and start hunting for flags sa 8 and 9 (xandy respectiveley)
+                // 6. Attack (priority #1)
+//                else if (1==1) {
+//                    boolean readytoheal = false;
+//                    //System.out.println("AttackDuck check...");
+//                    if (!attackDuck.selectiveAttack(rc)) {
+//                        //System.out.println("Attack performed.");
+//                        readytoheal = true;
+//                        continue; // Skip the rest of the turn
+//                    } else if (readytoheal){
+//                        System.out.println("healer Check");
+//                        healerDuck.healDuck(rc);
+//                    }
+//
+//                }
+//                    attackDuck.selectiveAttack(rc);
+//                    System.out.println("attackDuck check");
+               // }
+                // 7. Heal (priority #2)
+//                else if (rc.isActionReady()) {
+//                    System.out.println("healer Check");
+//                    healerDuck.healDuck(rc);
+//                }
+                // 8. Line up between 190 and 200 rounds
+//                else if ( 1==1) {
+//                    System.out.println("Current round before if statements: " + rc.getRoundNum());
+                //}
+//                else if (rc.getRoundNum() == 190  ) {
+//                    System.out.println("Lining up");
+//                    System.out.println(rc.getRoundNum());
+//                    System.out.println("Finding lane");
+//                    navigator.navigateToLane(robotState);
+//                }
+                // 9. Move across after round 200
 
-                    // assuming opponents spawn points are in similar locations, then use sa 0-5 to determine maplocationattack
-                    //maplocationattack in sa8
-
-                    //divide into teams: on spawn, read sa[10], then based upon that nubmer (divide it by 5)
-                    //assign itself a team number (there will be 10 teams 0-4 on team 0, 5-9 team 1, 10-14team 2 etc
-                    //then we assign one as the team leader and generlly that one makes the decisions (if that one in in jail
-                    // we suss that out.     
-
-
-
-                    //determine the size[sa4] , at round 201 use attackduck gotompalocation to send all the ducks
-                    // to those three locations
-                    // Alternate between builder and healer behavior
-                    //if depending upon results of sensenearbyMaplocation determine behavior: if there watersf fill, if
-                    //traps of oppposite fill
-                    // sensenearbyrobots if the enemey is near attack themm
-                    // sensenearbrobots so if they are friendly and no robots, find out who has lowest health, heal them
-                    if (turnCount % 2 == 0) {  //setup phase 200 rounds. explore and build then
-                        //at rnd 201 most ducks behave like attakc ducks 2/3 rounds, healer duck1/3
-                        //if there are water feature fill with buiilder   fucntion sensenearbyMaplocation
-                        builderDuck.doBuilderDuckActions();
-                    } else {
-                        healerDuck.healNearbyAlliesOrMove();
-                    }
+                else if (rc.getRoundNum() > 200) {
+                    //navigator.moveTo(rc.getLocation(), robotState.getTargetLocation(), rc);
+                    attackDuck.moveToTargetMapLocation(robotState.getTargetLocation());
+                    navigator.validateAndReassignDestination(rc, robotState);
                 }
             } catch (GameActionException e) {
                 System.out.println("GameActionException occurred!");
@@ -134,6 +174,28 @@ public abstract class RobotPlayer {
             }
         }
     }
+//    public void attemptToSpawn() throws GameActionException {
+//        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
+//        MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
+//        if (spawnLocs.length > 0) {
+//                        MarandomLoc1 = spawnLocs[rng.nextInt(spawnLocs.length)];
+//                        if (rc.canSpawn(randomLoc)) {
+//                            rc.spawn(randomLoc);
+//                        } else {
+//                            System.out.println("Cannot spawn at: " + randomLoc);
+//                        }
+//    }
+     public MapLocation getTeamDest(int teamNumber, RobotController rc) throws GameActionException{
+                // Determine the appropriate shared array indices
+        int enemyFlagX = rc.readSharedArray(8 + (2 * teamNumber));
+        int enemyFlagY = rc.readSharedArray(9 + (2 * teamNumber));
+        MapLocation enemyFlag = new MapLocation(enemyFlagX, enemyFlagY);
+        return enemyFlag;
+
+    }
+
+
+
 
     public static void updateEnemyRobots(RobotController rc) throws GameActionException {
         // Sensing methods can be passed in a radius of -1 to automatically
@@ -156,15 +218,12 @@ public abstract class RobotPlayer {
 
     public static void storeAllySpawns(RobotController rc) throws GameActionException {
         MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-
-        for (int i = 0; i < 3; i++) {
-            int x = spawnLocs[i].x;
-            int y = spawnLocs[i].y;
-            rc.writeSharedArray(2 * i, x);       // Write x-coordinate
-            rc.writeSharedArray(2 * i + 1, y);  // Write y-coordinate
-        }
-
-        System.out.println("Ally spawn locations stored in sharedArray.");
+        rc.writeSharedArray(0, spawnLocs[0].x);
+        rc.writeSharedArray(1, spawnLocs[0].y);
+        rc.writeSharedArray(2, spawnLocs[9].x);
+        rc.writeSharedArray(3, spawnLocs[9].y);
+        rc.writeSharedArray(4, spawnLocs[18].x);
+        rc.writeSharedArray(5,spawnLocs[18].y);
     }
 
     public static void storeMapDimensions(RobotController rc) throws GameActionException {
@@ -173,122 +232,103 @@ public abstract class RobotPlayer {
         rc.writeSharedArray(6, width);  // Write map width
         rc.writeSharedArray(7, height); // Write map height
 
-        System.out.println("Map dimensions (" + width + "x" + height + ") stored in sharedArray.");
+        //System.out.println("Map dimensions (" + width + "x" + height + ") stored in sharedArray.");
     }
 
     public static void storeEnemySpawns(RobotController rc) throws GameActionException {
-        int width = rc.readSharedArray(6);   // Read map width
-        int height = rc.readSharedArray(7); // Read map height
-
-        int enemySpawnSitex = width - rc.readSharedArray(0);  // Symmetric x-coordinate
-        int enemySpawnSitey = height - rc.readSharedArray(1); // Symmetric y-coordinate
-        rc.writeSharedArray(8, enemySpawnSitex);  // Write enemy x-coordinate
-        rc.writeSharedArray(9, enemySpawnSitey);  // Write enemy y-coordinate
-
-        System.out.println("Enemy spawn location (" + enemySpawnSitex + ", " + enemySpawnSitey + ") stored in sharedArray.");
+        int width = rc.getMapWidth();   // Read map width
+        int height = rc.getMapHeight(); // Read map height
+        int enemySpawnSitey=0;
+        int enemySpawnSitex=0;
+        for(int i=0; i<3; i++){
+            enemySpawnSitex = width - rc.readSharedArray(2*i);  // Symmetric x-coordinate
+            enemySpawnSitey = height - rc.readSharedArray(2*i+1); // Symmetric y-coordinate
+            rc.writeSharedArray(((2*i)+8), enemySpawnSitex);  // Write enemy x-coordinate
+            rc.writeSharedArray(((2*i)+9), enemySpawnSitey);  // Write enemy y-coordinate
+            //System.out.println("Enemy spawn location (" + enemySpawnSitex + ", " + enemySpawnSitey + ") stored in sharedArray.");
+        }
     }
+
+    public static void writeSpawnsites (int x, int y, RobotController rc) throws GameActionException {
+
+    }
+
+    public static boolean allTeamsAssigned(RobotController rc) throws GameActionException {
+        for (int team = 0; team < 10; team++) {
+            int maxIndex = 14 + team * 5 + 4; // Check last slot for each team
+            if (rc.readSharedArray(maxIndex) < 5) {
+                return false; // Not all teams are full
+            }
+        }
+        return true; // All teams are full
+    }
+
+    public static void assignTeam(RobotController rc, RobotState robotState) throws GameActionException {
+
+//        System.out.println("Assigned to Team " + team);
+        for (int team = 0; team < 10; team++) {
+            int baseIndex = 14 + team * 5; // Starting index for team's slots
+            int maxIndex = baseIndex + 4; // The "extra" slot for tracking count
+
+            // Read the current count of assigned robots for this team
+            int memberCount = rc.readSharedArray(maxIndex);
+
+            // If the team has fewer than 5 members
+            if (memberCount < 5) {
+                // Assign this robot to the team
+                rc.writeSharedArray(maxIndex, memberCount + 1); // Increment the team count
+                robotState.setTeamNumber(team); // Set team number in RobotState
+                ///System.out.println("Assigned to Team " + team + " (Member " + (memberCount + 1) + ")");
+                return; // Exit after assigning
+            }
+        }
+    }
+
+    protected static boolean findAndPickupFlag(RobotController rc) throws GameActionException {
+        if (rc.canPickupFlag(rc.getLocation())) {
+            rc.pickupFlag(rc.getLocation());
+            rc.setIndicatorString("Picked up a flag!");
+            return true;
+        }
+        return false;
+    }
+
+
+    public static void findRandomFlag(RobotController rc) throws GameActionException {
+
+    }
+
+    public static void scoutAndAct(RobotController rc, RobotState state, RobotNavigator rn) throws GameActionException {
+        // Sense nearby map info
+        MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
+
+        for (MapInfo tile : nearbyTiles) {
+            if (tile.getCrumbs() > 0) {
+                System.out.println("Found crumbs at: " + tile.getMapLocation());
+                rn.moveTo(rc.getLocation(), tile.getMapLocation(), rc); // Move towards crumbs
+                return;
+            }
+//            } else if (tile.isWater()) {
+//                System.out.println("Water found at: " + tile.getMapLocation());
+//                state.recordWaterTile(tile.getMLocation());
+//            } else if (tile.isDam() || tile.isWall()) {
+//                System.out.println("Obstacle found at: " + tile.getMLocation());
+//                state.recordObstacle(tile.getLocation());
+//            }
+        }
+
+        // If no specific targets, move randomly
+        Direction randomDir = Direction.values()[(int) (Math.random() * Direction.values().length)];
+        if (rc.canMove(randomDir)) {
+            rc.move(randomDir);
+        }
+    }
+
 }
 
 
-    //@SuppressWarnings("unused")
-    // Abstract run method that subclasses must implement
-    //public abstract void run() throws GameActionException;
 
-//    }
-////    public static void run(RobotController rc) throws GameActionException {
-////
-////        // Hello world! Standard output is very useful for debugging.
-////        // Everything you say here will be directly viewable in your terminal when you run a match!
-////        System.out.println("I'm the base Duck and Im alive");
-////
-////        // You can also use indicators to save debug notes in replays.
-////        rc.setIndicatorString("Hello world!");
-////
-////        while (true) {
-////            // This code runs during the entire lifespan of the robot, which is why it is in an infinite
-////            // loop. If we ever leave this loop and return from run(), the robot dies! At the end of the
-////            // loop, we call Clock.yield(), signifying that we've done everything we want to do.
-////
-////            turnCount += 1;  // We have now been alive for one more turn!
-////
-////            // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
-////            try {
-////                // Make sure you spawn your robot in before you attempt to take any actions!
-////                // Robots not spawned in do not have vision of any tiles and cannot perform any actions.
-////                if (!rc.isSpawned()){
-////                    MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-////                    // Pick a random spawn location to attempt spawning in.
-////                    MapLocation randomLoc = spawnLocs[rng.nextInt(spawnLocs.length)];
-////                    if (rc.canSpawn(randomLoc)) rc.spawn(randomLoc);
-////                }
-////                else{
-////                    if (rc.canPickupFlag(rc.getLocation())){
-////                        rc.pickupFlag(rc.getLocation());
-////                        rc.setIndicatorString("Holding a flag!");
-////                    }
-////                    // If we are holding an enemy flag, singularly focus on moving towards
-////                    // an ally spawn zone to capture it! We use the check roundNum >= SETUP_ROUNDS
-////                    // to make sure setup phase has ended.
-////                    if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS){
-////                        MapLocation[] spawnLocs = rc.getAllySpawnLocations();
-////                        MapLocation firstLoc = spawnLocs[0];
-////                        Direction dir = rc.getLocation().directionTo(firstLoc);
-////                        if (rc.canMove(dir)) rc.move(dir);
-////                    }
-////                    // Move and attack randomly if no objective.
-////                    Direction dir = directions[rng.nextInt(directions.length)];
-////                    MapLocation nextLoc = rc.getLocation().add(dir);
-////                    if (rc.canMove(dir)){
-////                        rc.move(dir);
-////                    }
-////                    else if (rc.canAttack(nextLoc)){
-////                        rc.attack(nextLoc);
-////                        System.out.println("Take that! BASE Duck Damaged an enemy that was in our way!");
-////                    }
-////
-////                    // Rarely attempt placing traps behind the robot.
-////                    MapLocation prevLoc = rc.getLocation().subtract(dir);
-////                    if (rc.canBuild(TrapType.EXPLOSIVE, prevLoc) && rng.nextInt() % 37 == 1)
-////                        rc.build(TrapType.EXPLOSIVE, prevLoc);
-////                    // We can also move our code into different methods or classes to better organize it!
-////                    updateEnemyRobots(rc);
-////                }
-////
-////            } catch (GameActionException e) {
-////                // Oh no! It looks like we did something illegal in the Battlecode world. You should
-////                // handle GameActionExceptions judiciously, in case unexpected events occur in the game
-////                // world. Remember, uncaught exceptions cause your robot to explode!
-////                System.out.println("GameActionException");
-////                e.printStackTrace();
-////
-////            } catch (Exception e) {
-////                // Oh no! It looks like our code tried to do something bad. This isn't a
-////                // GameActionException, so it's more likely to be a bug in our code.
-////                System.out.println("Exception");
-////                e.printStackTrace();
-////
-////            } finally {
-////                // Signify we've done everything we want to do, thereby ending our turn.
-////                // This will make our code wait until the next turn, and then perform this loop again.
-////                Clock.yield();
-////            }
-////            // End of loop: go back to the top. Clock.yield() has ended, so it's time for another turn!
-////        }
-////
-////        // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
-////    }
-//
-//    protected static Class<? extends RobotPlayer> determineDuckType(RobotController rc) {
-//        int roundNumber =rc.getRoundNum();
-//        if (roundNumber <= 20) {
-//            return AttackDuck.class;
-//        } else if ( roundNumber <= 35) {
-//            return BuilderDuck.class;
-//        } else {
-//            return HealerDuck.class;
-//        }
-//
-//    }
+
 //
 //    public void move(Direction dir) throws GameActionException {
 //        if (rc.canMove(dir)) {
@@ -299,12 +339,7 @@ public abstract class RobotPlayer {
 //    /**
 //     * Attempts to pick up a flag if the robot is on a flag location.
 //     */
-//    protected void findAndPickupFlag() throws GameActionException {
-//        if (rc.canPickupFlag(rc.getLocation())) {
-//            rc.pickupFlag(rc.getLocation());
-//            rc.setIndicatorString("Picked up a flag!");
-//        }
-//    }
+
 //
 //    // General method to find flag and move toward it
 //    protected void moveToAllySpawnLocation() throws GameActionException {
@@ -330,28 +365,3 @@ public abstract class RobotPlayer {
 //    protected int getRandomInt(int bound) {
 //        return rng.nextInt(bound);
 //    }
-//
-//
-//
-//
-//    public static void updateEnemyRobots(RobotController rc) throws GameActionException{
-//        // Sensing methods can be passed in a radius of -1 to automatically
-//        // use the largest possible value.
-//        RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-//        if (enemyRobots.length != 0){
-//            rc.setIndicatorString("There are nearby enemy robots! Scary!");
-//            // Save an array of locations with enemy robots in them for future use.
-//            MapLocation[] enemyLocations = new MapLocation[enemyRobots.length];
-//            for (int i = 0; i < enemyRobots.length; i++){
-//                enemyLocations[i] = enemyRobots[i].getLocation();
-//            }
-//            // Let the rest of our team know how many enemy robots we see!
-//            if (rc.canWriteSharedArray(0, enemyRobots.length)){
-//                rc.writeSharedArray(0, enemyRobots.length);
-//                int numEnemies = rc.readSharedArray(0);
-//            }
-//        }
-//    }
-//
-//  //  public abstract void run(RobotController rc) throws GameActionException;
-//}
