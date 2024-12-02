@@ -171,6 +171,12 @@ public abstract class RobotPlayer {
         }
     }
 
+    protected int getRandomInt(int bound) {
+        return rng.nextInt(bound);
+    }
+
+
+
 
     public static void updateEnemyRobots(RobotController rc) throws GameActionException{
         // Sensing methods can be passed in a radius of -1 to automatically
