@@ -85,11 +85,13 @@ public abstract class RobotPlayer {
                     storeAllySpawns(rc);
                     storeMapDimensions(rc);
                     storeEnemySpawns(rc);
+                    robotState.setLastLocation(rc.getLocation());
                 }
                 // 3. Assign robot to team
                 else if (rc.getRoundNum() == 50) {
                     assignTeam(rc, robotState);
-                }else if (findAndPickupFlag(rc)) {
+                }
+                else if (findAndPickupFlag(rc)) {
                     navigator.returnToBase(rc);
                 }
                 else if(rc.hasFlag()) {
@@ -107,7 +109,7 @@ public abstract class RobotPlayer {
 
                 // 4. Build stuff up to 200
                 else if (rc.getRoundNum() < 190) {
-                    builderDuck.doBuilderDuckActions();
+                    builderDuck.doBuilderDuckActions(robotState);
                 }
 //                if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS){
 //                    MapLocation[] spawnLocs = rc.getAllySpawnLocations();
@@ -118,7 +120,12 @@ public abstract class RobotPlayer {
 //                } // 5. Check and buy upgrades
                 else if (rc.getRoundNum() == 601 || rc.getRoundNum() == 1201 || rc.getRoundNum() == 1801) {
                     robotState.checkAndBuyUpgrades(rc.getRoundNum(), rc);
-                } else if (rc.getRoundNum() % 100 == 0){
+                } else if (rc.getRoundNum() % 10 == 0 && rc.getRoundNum() > 191){
+                    robotState.setCurrentLocation(rc.getLocation());
+                    if (robotState.hasMoved()){
+                        robotState.setTargetLocation(navigator.generateRandomLocation(rc));
+                    }
+                    robotState.setLastLocation(rc.getLocation());
                     MapLocation test = robotState.getTargetLocation();
                     System.out.println("Target Dest =: " + test.x +"," + test.y);
 
@@ -158,11 +165,42 @@ public abstract class RobotPlayer {
 //                }
                 // 9. Move across after round 200
 
-                else if (rc.getRoundNum() > 200) {
-                    //navigator.moveTo(rc.getLocation(), robotState.getTargetLocation(), rc);
-                    attackDuck.moveToTargetMapLocation(robotState.getTargetLocation());
-                    navigator.validateAndReassignDestination(rc, robotState);
+                else if (rc.getRoundNum() > 200){
+                    //if not in same place as 10 rounds ago do these else update targetloaction and do these
+                    if(rc.getRoundNum() %2 ==0){
+                        if(!attackDuck.selectiveAttack(rc))
+                            if(!healerDuck.healNearbyAlliesOrMove()) {
+                                builderDuck.doBuilderDuckActions(robotState);
+                            }
+                    }
+                    else {
+                        navigator.moveTowardsTarget(rc, robotState);
+                    }
                 }
+   ///################################################################33
+//                else if (rc.getRoundNum() ==190 ){
+//                    robotState.setLastLocation(rc.getLocation());
+//                }
+//                else if(rc.getRoundNum() > 200  && rc.getRoundNum() % 10 ==0) {
+//                    //every 10 rounds, if has moved returns false it is still close to where it was
+//                    // 10 rounds ago, then make a new target for the robot
+//                    if (!robotState.hasMoved()) {
+//                        //reassign
+//                        MapLocation newTarget= navigator.generateRandomLocation(rc);
+//                        robotState.setTargetLocation(newTarget);
+//                    }
+//                }
+//                else if (rc.getRoundNum() > 200) {
+//                    //navigator.moveTo(rc.getLocation(), robotState.getTargetLocation(), rc);
+//                    navigator.validateAndReassignDestination(rc, robotState);
+//                    //attackDuck.moveToTargetMapLocation(robotState.getTargetLocation());
+//                    navigator.moveTowardsTarget(rc, robotState);
+//
+//                }
+
+ ///############################################################################333
+
+
             } catch (GameActionException e) {
                 System.out.println("GameActionException occurred!");
                 e.printStackTrace();
@@ -295,7 +333,8 @@ public abstract class RobotPlayer {
 
 
     public static void findRandomFlag(RobotController rc) throws GameActionException {
-
+            MapLocation [] flags = rc.senseBroadcastFlagLocations();
+            //if (flags
     }
 
     public static void scoutAndAct(RobotController rc, RobotState state, RobotNavigator rn) throws GameActionException {

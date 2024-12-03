@@ -3,6 +3,37 @@ import battlecode.common.*;
 public class RobotState {
     private int teamNumber=-1;
     private MapLocation targetLocation =null;
+    private MapLocation currentLocation;
+    private MapLocation lastLocation;
+    private boolean moved =false;
+
+
+    public MapLocation getCurrentLocation() throws GameActionException {
+        return currentLocation;
+    }
+
+    public MapLocation getLastLocation() throws GameActionException {
+        return lastLocation;
+    }
+
+    public void setCurrentLocation(MapLocation location) throws GameActionException{
+        this.currentLocation = location;
+    }
+
+    public void setLastLocation(MapLocation location) throws GameActionException{
+        this.lastLocation = location;
+    }
+
+
+
+    public boolean getMoved() {
+        return moved;
+    }
+
+    // Setter for moved
+    public void setMoved(boolean moved) {
+        this.moved = moved;
+    }
 
     public int getTeamNumber() {
         return teamNumber;
@@ -41,4 +72,13 @@ public class RobotState {
             //System.out.println("Not enough points for upgrade: " + upgrade);
         //}
     }
+
+    public  boolean hasMoved ()  throws GameActionException {
+        if (this.currentLocation.isWithinDistanceSquared(this.lastLocation, 2)) {
+            return false;
+        }
+        return true;
+    }
+
+
 }

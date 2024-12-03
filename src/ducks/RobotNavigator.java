@@ -178,7 +178,8 @@ public class RobotNavigator {
     public  MapLocation generateRandomLocation(RobotController rc) {
         int width = rc.getMapWidth();
         int height = rc.getMapHeight();
-        Random random = new Random(); // Use robot ID as seed for consistency
+        long seed = ((long) rc.getID() * 31) + rc.getRoundNum();
+        Random random = new Random(seed); // Use robot ID as seed for consistency
 
         int x = random.nextInt(width);  // Random x-coordinate within map width
         int y = random.nextInt(height); // Random y-coordinate within map height
@@ -241,6 +242,39 @@ public class RobotNavigator {
             return true;
         }
         return false;
+    }
+
+    public void moveTowardsTarget(RobotController rc, RobotState robotState) throws GameActionException {
+        MapLocation target = robotState.getTargetLocation();
+        if (target == null) {
+            System.out.println("No target location set. Moving randomly.");
+            moveRandomly(rc);
+            return;
+        }
+
+        Direction dir = rc.getLocation().directionTo(target);
+        MapLocation adjacentLocation = rc.adjacentLocation(dir);
+
+        // Check if the adjacent location is passable
+        if (rc.canMove(dir) && rc.senseMapInfo(adjacentLocation).isPassable()) {
+            rc.move(dir);
+            //System.out.println("Moved towards target: " + target);
+        } else {
+           // System.out.println("Target direction not passable. Moving randomly.");
+            moveRandomly(rc);
+        }
+    }
+
+    // Random movement function
+    public void moveRandomly(RobotController rc) throws GameActionException {
+        Direction[] directions = Direction.values();
+        Direction randomDir = directions[new Random().nextInt(directions.length)];
+        if (rc.canMove(randomDir)) {
+            rc.move(randomDir);
+          //  System.out.println("Moved randomly in direction: " + randomDir);
+        } //else {
+//            System.out.println("Could not move randomly. Staying in place.");
+//        }
     }
 
 
