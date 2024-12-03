@@ -38,22 +38,34 @@ public strictfp class HealerDuck extends RobotPlayer{
             }
         }
 
-        public void healNearbyAlliesOrMove() throws GameActionException {
-            RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+    public void healNearbyAlliesOrMove() throws GameActionException {
+        RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
 
-            for (RobotInfo ally : allies) {
-                if (ally.getHealth() < 1000) {
-                    if (attemptToHealAlly(ally)) {
-                        return; // Successfully healed; stop further actions this turn.
-                    }
-                    moveTowardAlly(ally);
-                    return; // Moved closer to an ally; stop further actions this turn.
+        // Sort allies by priority: flag carriers first, then by health
+        RobotInfo bestAlly = null;
+        for (RobotInfo ally : allies) {
+            if (ally.getHealth() < 1000) {
+                if (bestAlly == null || isHigherPriority(ally, bestAlly)) {
+                    bestAlly = ally;
                 }
             }
-
-            // If no allies to heal or move towards, move randomly.
-            moveRandomly();
         }
+
+        if (bestAlly != null) {
+            // Try to heal the best ally
+            if (attemptToHealAlly(bestAlly)) {
+                return; // Successfully healed
+            }
+
+            // Move closer if not in range
+            moveTowardAlly(bestAlly);
+        } else {
+            // No allies need healing; move randomly
+            //moveRandomly();
+            moveSmartly();
+        }
+    }
+
 
         public boolean attemptToHealAlly(RobotInfo ally) throws GameActionException {
             if (rc.canHeal(ally.location)) {
@@ -77,57 +89,62 @@ public strictfp class HealerDuck extends RobotPlayer{
                 rc.move(dir);
             }
         }
-//    @Override
-//    public void run() throws GameActionException {
-//        while (true) {
-//            turnCount += 1;
-//            try {
-//                // Use the methods from RobotPlayer
-//                if (!rc.isSpawned()) {
-//                    attemptToSpawn();
-//                } else {
-//                    findAndPickupFlag();
-//
-//                    // If carrying a flag, move toward the nearest ally spawn location
-//                    if (rc.hasFlag()) {
-//                        moveToAllySpawnLocation();
-//                        break;
-//                    } else {
-//                        // Sense nearby ducks from our team
-//                        RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
-//
-//                        for (RobotInfo ally : allies) {
-//                            if (ally.getHealth() < 1000) {
-//                                // If the ally's health is below 1000, try to heal them
-//                                if (rc.canHeal(ally.location)) {
-//                                    rc.heal(ally.location);
-//                                    System.out.println("Healed ally at location: " + ally.location);
-//                                } else {
-//                                    // Move toward the ally if you can't heal them from the current location
-//                                    Direction toAlly = rc.getLocation().directionTo(ally.location);
-//                                    if (rc.canMove(toAlly)) {
-//                                        rc.move(toAlly);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                        // If no allies to heal, move randomly
-//                        Direction dir = directions[rng.nextInt(directions.length)];
-//                        MapLocation nextLoc = rc.getLocation().add(dir);
-//                        if (rc.canMove(dir)) {
-//                            rc.move(dir);
-//                        }
-//                    }
-//                }
-//            } catch (GameActionException e) {
-//                System.out.println("Exception caught in HealerDuck run method.");
-//                e.printStackTrace();
-//            } finally {
-//                // End the turn
-//                Clock.yield();
-//            }
-//        }
-//    }
+
+        public boolean isHigherPriority(RobotInfo ally, RobotInfo bestAlly) {
+            // Priority 1: Flag carriers are more important
+            if (ally.hasFlag() && !bestAlly.hasFlag()) {
+                return true;
+            }
+            if (!ally.hasFlag() && bestAlly.hasFlag()) {
+                return false;
+            }
+
+            // Priority 2: Lower health is more important
+            return ally.getHealth() < bestAlly.getHealth();
+        }
+
+        public void moveSmartly() throws GameActionException {
+            // Check for nearby crumbs
+            MapLocation[] crumbs = rc.senseNearbyCrumbs(-1);
+            if (crumbs.length > 0) {
+                moveTowardLocation(crumbs[0]); // Move toward the nearest crumb
+                return;
+            }
+
+            // Check for nearby activity (flags or robots)
+            FlagInfo[] flags = rc.senseNearbyFlags(-1);
+            if (flags.length > 0) {
+                moveTowardLocation(flags[0].getLocation()); // Move toward the nearest flag
+                return;
+            }
+            RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1);
+            if (nearbyRobots.length > 0) {
+                moveTowardLocation(nearbyRobots[0].location); // Move toward a nearby robot
+                return;
+            }
+
+            // Fallback: Systematic exploration (e.g., clockwise movement)
+            moveClockwise();
+        }
+
+        private void moveTowardLocation(MapLocation target) throws GameActionException {
+            Direction toTarget = rc.getLocation().directionTo(target);
+            if (rc.canMove(toTarget)) {
+                rc.move(toTarget);
+                System.out.println("Moved toward target at: " + target);
+            }
+        }
+
+        private void moveClockwise() throws GameActionException {
+            for (Direction dir : directions) { // Loop through all directions
+                if (rc.canMove(dir)) {
+                    rc.move(dir);
+                    System.out.println("Moved clockwise in direction: " + dir);
+                    return;
+                }
+            }
+            System.out.println("No valid movement options.");
+        }
 }
 
 
