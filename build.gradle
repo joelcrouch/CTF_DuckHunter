@@ -179,7 +179,6 @@ dependencies {
 
   // Add Mockito for JUnit 4
   testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.6.0'
-
   // The Battlecode engine.
   implementation group: 'org.battlecode', name: 'battlecode24', version: versions.battlecode
 
