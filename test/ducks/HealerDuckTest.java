@@ -109,28 +109,82 @@ public class HealerDuckTest {
     }
 
     @Test
-    public void testHealNearbyAlliesOrMove_NoAlliesNeedHealing() throws GameActionException {
-        // Setup: No allies or allies at full health
-        RobotInfo[] allies = new RobotInfo[]{
-                mock(RobotInfo.class)
-        };
+    public void testMoveTowardCrumbs() throws GameActionException {
+        // Mock nearby crumbs
+        MapLocation crumbLocation = new MapLocation(3, 3);
+        when(mockRc.senseNearbyCrumbs(-1)).thenReturn(new MapLocation[]{crumbLocation});
 
-        when(mockRc.senseNearbyRobots(-1, mockRc.getTeam())).thenReturn(allies);
-        when(allies[0].getHealth()).thenReturn(1000);  // Full health
+        // Mock current location
+        MapLocation currentLocation = new MapLocation(0, 0);
+        when(mockRc.getLocation()).thenReturn(currentLocation);
 
-        // Mock random direction selection
-        Direction[] directions = Direction.allDirections();
-        when(mockRng.nextInt(directions.length)).thenReturn(0);  // Select first direction
-        when(mockRc.canMove(directions[0])).thenReturn(true);
+        // Mock movement direction
+        Direction directionToCrumb = currentLocation.directionTo(crumbLocation);
+        when(mockRc.canMove(directionToCrumb)).thenReturn(true);
 
-        // Execute
-        healerDuck.healNearbyAlliesOrMove();
+        // Call the method
+        healerDuck.moveSmartly();
 
-        // Verify random movement occurred
-        verify(mockRc).move(directions[0]);
+        // Verify the robot moved toward the crumb
+        verify(mockRc, times(1)).move(directionToCrumb);
     }
 
-    //    @Test
+    @Test
+    public void testFallbackClockwiseMovement() throws GameActionException {
+        // Mock no crumbs, flags, or robots nearby
+        when(mockRc.senseNearbyCrumbs(-1)).thenReturn(new MapLocation[0]);
+        when(mockRc.senseNearbyFlags(-1)).thenReturn(new FlagInfo[0]);
+        when(mockRc.senseNearbyRobots(-1)).thenReturn(new RobotInfo[0]);
+
+        // Mock clockwise movement
+        when(mockRc.canMove(Direction.NORTH)).thenReturn(true);
+
+        // Call the method
+        healerDuck.moveSmartly();
+
+        // Verify the robot moved in a clockwise direction
+        verify(mockRc, times(1)).move(Direction.NORTH);
+    }
+
+//    @Test
+//    public void testHealNearbyAlliesOrMove_NoAlliesNeedHealing() throws GameActionException {
+//        // Setup: No allies or allies at full health
+//        RobotInfo[] allies = new RobotInfo[]{
+//                mock(RobotInfo.class)
+//        };
+//
+//        when(mockRc.senseNearbyRobots(-1, mockRc.getTeam())).thenReturn(allies);
+//        when(allies[0].getHealth()).thenReturn(1000);  // Full health
+//
+//        // Mock random direction selection
+//        Direction[] directions = Direction.allDirections();
+//        when(mockRng.nextInt(directions.length)).thenReturn(0);  // Select first direction
+//        when(mockRc.canMove(directions[0])).thenReturn(true);
+//
+//        // Execute
+//        healerDuck.healNearbyAlliesOrMove();
+//
+//        // Verify random movement occurred
+//        verify(mockRc).move(directions[0]);
+//    }
+//
+//    @Test
+//    public void testHealNearbyAlliesOrMove_NoAllies_MoveRandomly() throws GameActionException {
+//        // Mock senseNearbyRobots to return no allies
+//        when(mockRc.senseNearbyRobots(-1, mockRc.getTeam())).thenReturn(new RobotInfo[0]);
+//
+//        // Mock random movement
+//        when(mockRng.nextInt(anyInt())).thenReturn(Direction.NORTH.ordinal());
+//        when(mockRc.canMove(Direction.NORTH)).thenReturn(true);
+//
+//        // Call the method
+//        healerDuck.healNearbyAlliesOrMove();
+//
+//        // Verify random movement
+//        verify(mockRc, times(1)).move(Direction.NORTH);
+//    }
+//
+//    @Test
 //    public void testAttemptToHealAlly_Success() throws GameActionException {
 //        // Mock an ally RobotInfo
 //        RobotInfo mockAlly = mock(RobotInfo.class);
@@ -147,9 +201,7 @@ public class HealerDuckTest {
 //
 //        // Verify the behavior
 //        assertTrue("Expected attemptToHealAlly to return true", result);
-//        verify(mockRc, times(1)).canHeal(mockLocation);
 //        verify(mockRc, times(1)).heal(mockLocation);
 //    }
-
 
 }

@@ -61,7 +61,8 @@ public strictfp class HealerDuck extends RobotPlayer{
             moveTowardAlly(bestAlly);
         } else {
             // No allies need healing; move randomly
-            moveRandomly();
+            //moveRandomly();
+            moveSmartly();
         }
     }
 
@@ -102,7 +103,48 @@ public strictfp class HealerDuck extends RobotPlayer{
             return ally.getHealth() < bestAlly.getHealth();
         }
 
+        public void moveSmartly() throws GameActionException {
+            // Check for nearby crumbs
+            MapLocation[] crumbs = rc.senseNearbyCrumbs(-1);
+            if (crumbs.length > 0) {
+                moveTowardLocation(crumbs[0]); // Move toward the nearest crumb
+                return;
+            }
 
+            // Check for nearby activity (flags or robots)
+            FlagInfo[] flags = rc.senseNearbyFlags(-1);
+            if (flags.length > 0) {
+                moveTowardLocation(flags[0].getLocation()); // Move toward the nearest flag
+                return;
+            }
+            RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1);
+            if (nearbyRobots.length > 0) {
+                moveTowardLocation(nearbyRobots[0].location); // Move toward a nearby robot
+                return;
+            }
+
+            // Fallback: Systematic exploration (e.g., clockwise movement)
+            moveClockwise();
+        }
+
+        private void moveTowardLocation(MapLocation target) throws GameActionException {
+            Direction toTarget = rc.getLocation().directionTo(target);
+            if (rc.canMove(toTarget)) {
+                rc.move(toTarget);
+                System.out.println("Moved toward target at: " + target);
+            }
+        }
+
+        private void moveClockwise() throws GameActionException {
+            for (Direction dir : directions) { // Loop through all directions
+                if (rc.canMove(dir)) {
+                    rc.move(dir);
+                    System.out.println("Moved clockwise in direction: " + dir);
+                    return;
+                }
+            }
+            System.out.println("No valid movement options.");
+        }
 }
 
 
