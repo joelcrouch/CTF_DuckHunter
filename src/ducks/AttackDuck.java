@@ -84,6 +84,29 @@ public class AttackDuck {
 //        }
 //    }
 
+    public boolean selectiveAttack(RobotController rc) throws GameActionException {
+        // Sense all nearby robots
+        RobotInfo[] nearbyRobots = rc.senseNearbyRobots();
+
+        // Loop through the sensed robots
+        for (RobotInfo robot : nearbyRobots) {
+            // Check if the robot is an enemy and within attack range
+            if (!robot.getTeam().equals(rc.getTeam())) { // Ensure it's not an ally
+                MapLocation enemyLoc = robot.getLocation();
+                if (rc.canAttack(enemyLoc)) { // Ensure it's within attack range
+                    rc.attack(enemyLoc); // Attack the enemy
+                    System.out.println("Attacked enemy at: " + enemyLoc);
+                    return true; // Stop after attacking
+                }
+            }
+        }
+        // If no attack occurred, return false
+        return false;
+    }
+        // If no enemies are in range, fallback to another action
+        //System.out.println("No enemies to attack. Falling back to other behavior.");
+  //  }
+
     public void attackLowestHealthRobot(RobotInfo[] enemyRobots) throws GameActionException {
         // RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         RobotInfo lowestHealthRobot = enemyRobots[0];

@@ -7,6 +7,7 @@ import ducks.BuilderDuck;
 import ducks.RobotNavigator;
 
 import java.lang.reflect.MalformedParameterizedTypeException;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -92,6 +93,7 @@ public abstract class RobotPlayer {
                     assignTeam(rc, robotState);
                 }
                 else if (findAndPickupFlag(rc)) {
+                    System.out.println("in pickup flag loop");
                     navigator.returnToBase(rc);
                 }
                 else if(rc.hasFlag()) {
@@ -100,7 +102,7 @@ public abstract class RobotPlayer {
                 else if (rc.getRoundNum() == 100) {
                     // Assign a random destination if not already set
                     if (robotState.getTargetLocation() == null) {
-                        MapLocation randomDestination = navigator.generateRandomLocation(rc);
+                        MapLocation randomDestination = navigator.generateRandomLocation(rc, robotState);
                         robotState.setTargetLocation(randomDestination);
                         System.out.println("Assigned random destination: " + randomDestination);
                     }
@@ -109,7 +111,11 @@ public abstract class RobotPlayer {
 
                 // 4. Build stuff up to 200
                 else if (rc.getRoundNum() < 190) {
-                    builderDuck.doBuilderDuckActions(robotState);
+                    if (rc.getRoundNum() %2 ==0){
+                        builderDuck.doBuilderDuckActions(robotState);
+                    }else{
+                        healerDuck.moveRandomly();
+                    }
                 }
 //                if (rc.hasFlag() && rc.getRoundNum() >= GameConstants.SETUP_ROUNDS){
 //                    MapLocation[] spawnLocs = rc.getAllySpawnLocations();
@@ -120,15 +126,34 @@ public abstract class RobotPlayer {
 //                } // 5. Check and buy upgrades
                 else if (rc.getRoundNum() == 601 || rc.getRoundNum() == 1201 || rc.getRoundNum() == 1801) {
                     robotState.checkAndBuyUpgrades(rc.getRoundNum(), rc);
-                } else if (rc.getRoundNum() % 10 == 0 && rc.getRoundNum() > 191){
+                } else if ((rc.getRoundNum() % 10 == 0) && (rc.getRoundNum() > 210)){
                     robotState.setCurrentLocation(rc.getLocation());
+                    if(rc.getID() % 3 == 0){ System.out.println("SET  Current location");}
+                    MapLocation check= robotState.getTargetLocation();
                     if (robotState.hasMoved()){
-                        robotState.setTargetLocation(navigator.generateRandomLocation(rc));
+                        MapLocation target =navigator.generateRandomLocation(rc, robotState);
+                        System.out.println("chagning target location");
+                        robotState.setTargetLocation(target);
                     }
                     robotState.setLastLocation(rc.getLocation());
                     MapLocation test = robotState.getTargetLocation();
                     System.out.println("Target Dest =: " + test.x +"," + test.y);
+                    System.out.println("Target Dest =: " + check.x +"," + check.y);
 
+                }else if (rc.getRoundNum() > 200){
+                    //if not in same place as 10 rounds ago do these else update targetloaction and do these
+                    if(rc.getRoundNum() %2 ==0){
+                        if(!attackDuck.selectiveAttack(rc))
+                            if(!healerDuck.healNearbyAlliesOrMove()) {
+                                builderDuck.doBuilderDuckActions(robotState);
+                            }
+                    }else {
+                        navigator.moveTowardsTarget(rc, robotState);
+                    }
+                } else {
+//                    navigator.moveTowardsTarget(rc, robotState);
+                    MapLocation test = robotState.getTargetLocation();
+                    System.out.println("###############################################Moving to:" + test.x +"," + test.y);
                 }
 
                 // 6. Attack (priority #1)
@@ -165,18 +190,9 @@ public abstract class RobotPlayer {
 //                }
                 // 9. Move across after round 200
 
-                else if (rc.getRoundNum() > 200){
-                    //if not in same place as 10 rounds ago do these else update targetloaction and do these
-                    if(rc.getRoundNum() %2 ==0){
-                        if(!attackDuck.selectiveAttack(rc))
-                            if(!healerDuck.healNearbyAlliesOrMove()) {
-                                builderDuck.doBuilderDuckActions(robotState);
-                            }
-                    }
-                    else {
-                        navigator.moveTowardsTarget(rc, robotState);
-                    }
-                }
+
+
+
    ///################################################################33
 //                else if (rc.getRoundNum() ==190 ){
 //                    robotState.setLastLocation(rc.getLocation());
@@ -323,10 +339,20 @@ public abstract class RobotPlayer {
     }
 
     protected static boolean findAndPickupFlag(RobotController rc) throws GameActionException {
-        if (rc.canPickupFlag(rc.getLocation())) {
-            rc.pickupFlag(rc.getLocation());
-            rc.setIndicatorString("Picked up a flag!");
-            return true;
+        FlagInfo [] flags = rc.senseNearbyFlags(-1);
+        if (flags.length >0){
+            for (int i = 0; i < flags.length; i++) {
+                if (flags[i].getTeam() != rc.getTeam()) {
+                    if (rc.canPickupFlag(flags[i].getLocation())) {
+                        rc.pickupFlag(flags[i].getLocation());
+                        return true;
+                    } else {
+                        MapLocation flag = flags[i].getLocation();
+                        rc.move(rc.getLocation().directionTo(flag));
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }

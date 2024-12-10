@@ -175,16 +175,22 @@ public class RobotNavigator {
         //System.out.println("Obstacle in all directions. Unable to move.");
     }
 
-    public  MapLocation generateRandomLocation(RobotController rc) {
+    public  MapLocation generateRandomLocation(RobotController rc, RobotState state) {
         int width = rc.getMapWidth();
         int height = rc.getMapHeight();
-        long seed = ((long) rc.getID() * 31) + rc.getRoundNum();
-        Random random = new Random(seed); // Use robot ID as seed for consistency
+        long seed = ( rc.getID() + rc.getRoundNum());
+        Random random = new Random(); // Use robot ID as seed for consistency
 
         int x = random.nextInt(width);  // Random x-coordinate within map width
         int y = random.nextInt(height); // Random y-coordinate within map height
-
-        return new MapLocation(x, y);
+        MapLocation newTargetLocation = new MapLocation(x, y);
+        if (newTargetLocation.equals(state.getTargetLocation())) {
+            int newX=  (random.nextInt(rc.getRoundNum()))/width;
+            int newY = (random.nextInt(rc.getRoundNum()))/height;
+            return new MapLocation(newX, newY);
+        } else{
+            return newTargetLocation;
+        }
     }
 
 
@@ -192,7 +198,7 @@ public class RobotNavigator {
         MapLocation currentTarget = robotState.getTargetLocation();
         if (currentTarget == null) {
             System.out.println("No current target. Assigning new target.");
-            robotState.setTargetLocation(generateRandomLocation(rc));
+            robotState.setTargetLocation(generateRandomLocation(rc, robotState));
             return; // Exit early to avoid null pointer issues
         }
 
@@ -213,7 +219,7 @@ public class RobotNavigator {
             if (flags.length > 0) {
                 robotState.setTargetLocation(flags[0]);
             } else {
-                MapLocation newTarget = generateRandomLocation(rc);
+                MapLocation newTarget = generateRandomLocation(rc, robotState);
                 robotState.setTargetLocation(newTarget);
             }
         }

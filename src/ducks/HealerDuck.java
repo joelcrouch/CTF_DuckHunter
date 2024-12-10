@@ -13,21 +13,35 @@ public  class HealerDuck {
         this.rc = rc;
     }
 
-    public void healNearbyAlliesOrMove() throws GameActionException {
-        System.out.println("Healing NearbyAlliesOrMove");
+    public void healDuck(RobotController rc) throws GameActionException {
+        RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+
+        for (RobotInfo ally : allies) {
+            if (ally.getHealth() < 800) {
+                if (rc.canHeal(ally.location)) {
+                    rc.heal(ally.location);
+                    System.out.println("Healed ally at location: " + ally.location);
+                }
+            }
+        }
+    }
+
+    public boolean healNearbyAlliesOrMove() throws GameActionException {
+        //System.out.println("Healing NearbyAlliesOrMove");
         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
 
         for (RobotInfo ally : allies) {
             if (ally.getHealth() < 1000) {
                 if (attemptToHealAlly(ally)) {
-                    return; // Successfully healed; stop further actions this turn.
+                    return true ; // Successfully healed; stop further actions this turn.
                 }
-                moveTowardAlly(ally);
-                return; // Moved closer to an ally; stop further actions this turn.
+                //moveTowardAlly(ally);
+                //return; // Moved closer to an ally; stop further actions this turn.
             }
         }
+        return false;
         // If no allies to heal or move towards, move randomly.
-        moveRandomly();
+        //moveRandomly();
     }
 
     public boolean attemptToHealAlly(RobotInfo ally) throws GameActionException {
